@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AdsGram Reklama</title>
+
+    <!-- AdsGram SDK -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            text-align: center;
+            padding-top: 60px;
+        }
+        #showAdBtn {
+            padding: 14px 25px;
+            font-size: 20px;
+            border-radius: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #showAdBtn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>AdsGram Reklama</h2>
+    <p>Tugmani bosganda reklama chiqadi 👇</p>
+
+    <button id="showAdBtn">Reklamani ko‘rsat</button>
+
+    <script>
+        // AdsGram SDKni ishga tushirish
+        const AdController = window.Adsgram.init({
+            blockId: "int-18028"   // 👉 BU YERGA ADSGRAM BLOCK ID YOZILADI
+        });
+
+        // Tugma bosilganda reklama ko‘rsatish
+        document.getElementById("showAdBtn").onclick = function () {
+            AdController.show()
+                .then((result) => {
+                    console.log("Reklama ko‘rildi:", result);
+                    alert("Reklama oxirigacha ko‘rildi — foydalanuvchini mukofotlash mumkin!");
+                })
+                .catch((error) => {
+                    console.error("Xatolik:", error);
+                    alert("Reklama yuklanmadi yoki foydalanuvchi yopdi.");
+                });
+        };
+    </script>
+
+</body>
+</html>
