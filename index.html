@@ -49,7 +49,6 @@ button{
 </head>
 <body>
 
-<!-- EDITOR -->
 <div id="editor" class="app">
   <h2>🚀 HTML Run App - Cheksiz Fayl</h2>
   <input type="text" id="name" placeholder="Link nomini yozing (masalan: loyiham-mening)">
@@ -59,7 +58,6 @@ button{
   <p id="link"></p>
 </div>
 
-<!-- RUN NATIJA -->
 <div id="runResult" style="display:none"></div>
 
 <script>
@@ -80,14 +78,31 @@ if(runId){
 
   db.ref("codes/"+runId).once("value").then(snap=>{
     var files = snap.val(); // Object: {filename: code}
-    for(var fname in files){
-      var iframe = document.createElement("iframe");
-      iframe.style.width="100%";
-      iframe.style.height="500px";
-      iframe.style.border="1px solid #fff";
-      // Har bir fayl alohida sahifa sifatida iframe ichida ochiladi
-      iframe.srcdoc = files[fname];
-      document.getElementById("runResult").appendChild(iframe);
+    var mainFileCode = null;
+    
+    // index kalitini qidirish (agar u barcha fayllar ichida bo'lsa)
+    if (files.index) {
+        mainFileCode = files.index;
+    } else {
+        // Agar index topilmasa, birinchi faylni olish
+        for(var fname in files){
+            mainFileCode = files[fname];
+            break; // Faqat birinchi faylni olib, tugatish
+        }
+    }
+
+    if (mainFileCode) {
+        var iframe = document.createElement("iframe");
+        iframe.style.width="100%";
+        iframe.style.height="500px";
+        iframe.style.border="1px solid #fff";
+        // Faqat topilgan asosiy fayl iframe ichida ochiladi
+        iframe.srcdoc = mainFileCode;
+        document.getElementById("runResult").appendChild(iframe);
+
+        // Izoh: Qolgan fayllarni (masalan, CSS, JS) yuklash uchun ularni
+        // asosiy HTML kodi ichiga kiritish kerak bo'ladi, chunki 
+        // iframe bitta faylni yuklayapti.
     }
   });
 }
@@ -104,7 +119,8 @@ function save(){
 
   if(files.length === 0){
     var codeArea = document.getElementById("code").value;
-    fileCodes["index"] = codeArea;
+    // Fayl tanlanmagan bo'lsa, 'index' nomi ostida saqlanadi
+    fileCodes["index"] = codeArea; 
     saveToFirebase(name, fileCodes);
   } else {
     let readCount = 0;
@@ -112,7 +128,8 @@ function save(){
       let file = files[i];
       let reader = new FileReader();
       reader.onload = function(e){
-        let fname = file.name.replace(/\.[^/.]+$/,"");
+        // Fayl nomini olamiz (index.html -> index, style.css -> style)
+        let fname = file.name.replace(/\.[^/.]+$/,""); 
         fileCodes[fname] = e.target.result;
         readCount++;
         if(readCount === files.length){
