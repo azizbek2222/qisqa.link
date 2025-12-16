@@ -1,137 +1,34 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-<meta charset="UTF-8">
-<title>HTML Run App - Multi File Unlimited</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase.js"></script>
-<style>
-*{box-sizing:border-box;font-family:Segoe UI,sans-serif}
-body{
-  margin:0;
-  min-height:100vh;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:#fff;
-}
-/* EDITOR */
-.app{
-  max-width:700px;
-  margin:auto;
-  padding:25px;
-}
-input, textarea{
-  width:100%;
-  border-radius:12px;
-  border:none;
-  padding:15px;
-  margin-bottom:10px;
-}
-textarea{
-  height:160px;
-}
-button{
-  width:100%;
-  margin-top:5px;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-  background:linear-gradient(135deg,#00f260,#0575e6);
-  color:#fff;
-}
-/* RUN PAGE */
-#runResult{
-  padding:20px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Code Snip Editor</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- EDITOR -->
-<div id="editor" class="app">
-  <h2>🚀 HTML Run App - Cheksiz Fayl</h2>
-  <input type="text" id="name" placeholder="Link nomini yozing (masalan: loyiham-mening)">
-  <textarea id="code" placeholder="HTML kod yoki index.html yozing..."></textarea>
-  <input type="file" id="files" multiple webkitdirectory directory>
-  <button onclick="save()">▶ RUN & LINK</button>
-  <p id="link"></p>
-</div>
+    <header>
+        <h1>HTML Snip Muharriri</h1>
+        <p>Kodni yozing, ishga tushiring va URL orqali ulashing!</p>
+    </header>
 
-<!-- RUN NATIJA -->
-<div id="runResult" style="display:none"></div>
+    <div class="container">
+        <div class="panel editor">
+            <h2>Kodingiz (HTML/CSS/JS)</h2>
+            <textarea id="code-editor" placeholder="HTML kodingizni bu yerga yozing..."></textarea>
+            <div class="actions">
+                <button onclick="runCode()">▶️ Run (Ishga tushirish)</button>
+                <button onclick="getShareLink()">🔗 Get Share Link (Havolani olish)</button>
+            </div>
+        </div>
 
-<script>
-var firebaseConfig={
-  apiKey:"AIzaSyBrMKJ4MPilQg6gZsaE-Hlqlgo5F4Q8IsM",
-  databaseURL:"https://xabar-tizimi-default-rtdb.firebaseio.com"
-};
-firebase.initializeApp(firebaseConfig);
-var db=firebase.database();
+        <div class="panel result">
+            <h2>Natija</h2>
+            <iframe id="result-iframe" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+        </div>
+    </div>
 
-// URL parametrlari
-var params=new URLSearchParams(location.search);
-var runId=params.get("run");
-var page=params.get("page") || "index.html";
-
-if(runId){
-  // hamma UI ni yashiramiz
-  document.body.innerHTML = "";
-
-  db.ref("codes/"+runId).once("value").then(snap=>{
-    var files=snap.val();
-    if(!files){document.body.innerHTML="Topilmadi";return;}
-
-    // index.html bo‘lmasa, birinchi faylni ochadi
-    var html=files[page] || files["index.html"] || Object.values(files)[0];
-
-    // ichki linklarni routerga moslash
-    html = html.replace(
-      /href="([^"]+\.html)"/g,
-      'href="?run='+runId+'&page=$1"'
-    );
-
-    // to‘g‘ridan-to‘g‘ri HTMLni yozamiz
-    document.open();
-    document.write(html);
-    document.close();
-  });
-}
-
-// ================= SAVE QISMI =================
-
-function save(){
-  var name=document.getElementById("name").value.trim();
-  if(!name){alert("Link nomini yozing");return;}
-
-  var files=document.getElementById("files").files;
-  var fileCodes={};
-  let read=0;
-
-  for(let i=0;i<files.length;i++){
-    let file=files[i];
-    let reader=new FileReader();
-    reader.onload=function(e){
-      fileCodes[file.name]=e.target.result;
-      read++;
-      if(read===files.length){
-        saveToFirebase(name,fileCodes);
-      }
-    }
-    reader.readAsText(file);
-  }
-}
-
-function saveToFirebase(name,filesObj){
-  var id=name+"-"+Math.random().toString(36).slice(2,8);
-  db.ref("codes/"+id).set(filesObj);
-
-  var link=location.origin+location.pathname+"?run="+id;
-  document.getElementById("link").innerHTML=
-    `<a href="${link}" target="_blank">${link}</a>`;
-}
-</script>
-
+    <script src="script.js"></script>
 </body>
 </html>
