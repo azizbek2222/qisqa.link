@@ -70,68 +70,66 @@ var firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 var db=firebase.database();
 
-// URLdan run parameterni olish
+// URL parametrlari
 var params=new URLSearchParams(location.search);
 var runId=params.get("run");
+var page=params.get("page") || "index.html";
 
 if(runId){
-  document.getElementById("editor").style.display="none";
-  document.getElementById("runResult").style.display="block";
+  // hamma UI ni yashiramiz
+  document.body.innerHTML = "";
 
   db.ref("codes/"+runId).once("value").then(snap=>{
-    var files = snap.val(); // Object: {filename: code}
-    for(var fname in files){
-      var iframe = document.createElement("iframe");
-      iframe.style.width="100%";
-      iframe.style.height="500px";
-      iframe.style.border="1px solid #fff";
-      // Har bir fayl alohida sahifa sifatida iframe ichida ochiladi
-      iframe.srcdoc = files[fname];
-      document.getElementById("runResult").appendChild(iframe);
-    }
+    var files=snap.val();
+    if(!files){document.body.innerHTML="Topilmadi";return;}
+
+    // index.html bo‘lmasa, birinchi faylni ochadi
+    var html=files[page] || files["index.html"] || Object.values(files)[0];
+
+    // ichki linklarni routerga moslash
+    html = html.replace(
+      /href="([^"]+\.html)"/g,
+      'href="?run='+runId+'&page=$1"'
+    );
+
+    // to‘g‘ridan-to‘g‘ri HTMLni yozamiz
+    document.open();
+    document.write(html);
+    document.close();
   });
 }
 
+// ================= SAVE QISMI =================
+
 function save(){
-  var name = document.getElementById("name").value.trim();
-  if(!name){
-    alert("Iltimos link uchun nom yozing!");
-    return;
-  }
+  var name=document.getElementById("name").value.trim();
+  if(!name){alert("Link nomini yozing");return;}
 
-  var files = document.getElementById("files").files;
-  var fileCodes = {}; // Barcha fayllarni saqlash uchun object
+  var files=document.getElementById("files").files;
+  var fileCodes={};
+  let read=0;
 
-  if(files.length === 0){
-    var codeArea = document.getElementById("code").value;
-    fileCodes["index"] = codeArea;
-    saveToFirebase(name, fileCodes);
-  } else {
-    let readCount = 0;
-    for(let i=0;i<files.length;i++){
-      let file = files[i];
-      let reader = new FileReader();
-      reader.onload = function(e){
-        let fname = file.name.replace(/\.[^/.]+$/,"");
-        fileCodes[fname] = e.target.result;
-        readCount++;
-        if(readCount === files.length){
-          saveToFirebase(name, fileCodes);
-        }
+  for(let i=0;i<files.length;i++){
+    let file=files[i];
+    let reader=new FileReader();
+    reader.onload=function(e){
+      fileCodes[file.name]=e.target.result;
+      read++;
+      if(read===files.length){
+        saveToFirebase(name,fileCodes);
       }
-      reader.readAsText(file);
     }
+    reader.readAsText(file);
   }
 }
 
-function saveToFirebase(name, filesObj){
-  var randomStr = Math.random().toString(36).substring(2,8);
-  var uniqueId = name + "-" + randomStr;
+function saveToFirebase(name,filesObj){
+  var id=name+"-"+Math.random().toString(36).slice(2,8);
+  db.ref("codes/"+id).set(filesObj);
 
-  db.ref("codes/"+uniqueId).set(filesObj);
-
-  var link = location.origin + location.pathname + "?run=" + encodeURIComponent(uniqueId);
-  document.getElementById("link").innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+  var link=location.origin+location.pathname+"?run="+id;
+  document.getElementById("link").innerHTML=
+    `<a href="${link}" target="_blank">${link}</a>`;
 }
 </script>
 
