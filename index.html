@@ -1,42 +1,103 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Code Snip Editor (Firebase)</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script> 
+<meta charset="UTF-8">
+<title>Firebase Link Shortener Demo</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+h2 { color: #333; }
+input { width: 70%; padding: 10px; margin-right: 5px; border-radius: 5px; border: 1px solid #ccc; }
+button { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; background: #007bff; color: #fff; }
+button:hover { background: #0056b3; }
+#result { margin-top: 20px; font-size: 16px; }
+a { color: #007bff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
 </head>
 <body>
 
-    <header>
-        <h1>HTML Snip Muharriri (Firebase orqali ulashish)</h1>
-        <p>Kodni yozing, ishga tushiring, Firebase'ga saqlang va ulashing!</p>
-    </header>
+<h2>Firebase Link Shortener Demo</h2>
+<input type="text" id="longUrl" placeholder="Uzun URLni kiriting">
+<button onclick="shorten()">Qisqartirish</button>
+<button onclick="copyLink()">Nusxalash</button>
 
-    <div class="container">
-        <div class="panel editor">
-            <h2>Kodingiz (HTML/CSS/JS)</h2>
-            <textarea id="code-editor" placeholder="HTML kodingizni bu yerga yozing..."></textarea>
-            <div class="actions">
-                <button onclick="runCode()">▶️ Run (Ishga tushirish)</button>
-                
-                <input type="file" id="file-input" style="display: none;" onchange="loadFile(event)" multiple>
-                <button onclick="document.getElementById('file-input').click()">📁 Fayldan yuklash</button>
-                
-                <button onclick="saveAndGetFirebaseLink()">💾 Save & Get Link</button>
-            </div>
-            <input type="text" id="share-link-output" placeholder="Ulashish havolasi shu yerda paydo bo'ladi" readonly style="margin-top: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; display: none;">
-        </div>
+<div id="result"></div>
 
-        <div class="panel result">
-            <h2>Natija</h2>
-            <iframe id="result-iframe" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
-        </div>
-    </div>
+<script>
+// 🔹 Firebase konfiguratsiyasi
+const firebaseConfig = {
+  apiKey: "AIzaSyA7VLHdjPqf_tobSiBczGbN8H7YlFwq9Wg",
+  authDomain: "magnetic-alloy-467611-u7.firebaseapp.com",
+  databaseURL: "https://magnetic-alloy-467611-u7-default-rtdb.firebaseio.com",
+  projectId: "magnetic-alloy-467611-u7",
+  storageBucket: "magnetic-alloy-467611-u7.appspot.com",
+  messagingSenderId: "589500919880",
+  appId: "1:589500919880:web:ec5667d52b78782c51687d",
+  measurementId: "G-KW75V0LKMB"
+};
 
-    <script src="script.js"></script>
+// Firebase init
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentShort = "";
+
+// 🔹 Random ID yaratish
+function randomId() {
+  return Math.random().toString(36).substring(2, 8);
+}
+
+// 🔹 Qisqartirish funksiyasi
+function shorten() {
+  const longUrl = document.getElementById("longUrl").value.trim();
+  if(!longUrl) { alert("URL kiritilmadi!"); return; }
+
+  const shortId = randomId();
+  db.ref("links/" + shortId).set({
+    url: longUrl,
+    clicks: 0
+  })
+  .then(() => console.log("Link saqlandi:", shortId))
+  .catch(err => console.error(err));
+
+  const shortUrl = window.location.href.split('?')[0] + "?id=" + shortId;
+  currentShort = shortId;
+
+  document.getElementById("result").innerHTML = `
+    <p>Qisqa link:</p>
+    <a href="#" onclick="openLink('${shortId}');return false;">${shortUrl}</a>
+  `;
+}
+
+// 🔹 Linkni ochish va click counter
+function openLink(shortId) {
+  db.ref("links/" + shortId).once("value")
+    .then(snapshot => {
+      const data = snapshot.val();
+      if(!data) { alert("Link topilmadi!"); return; }
+      db.ref("links/" + shortId + "/clicks").set(data.clicks + 1);
+      window.open(data.url, "_blank");
+    })
+    .catch(err => console.error(err));
+}
+
+// 🔹 Nusxalash
+function copyLink() {
+  if(!currentShort) { alert("Avval link qisqartiring!"); return; }
+  const fakeLink = window.location.href.split('?')[0] + "?id=" + currentShort;
+  navigator.clipboard.writeText(fakeLink);
+  alert("Link nusxalandi ✅");
+}
+
+// 🔹 Avtomatik redirect ?id=xxxx bo‘lsa
+window.onload = function() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  if(id) { openLink(id); }
+};
+</script>
+
 </body>
 </html>
