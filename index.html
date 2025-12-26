@@ -2,70 +2,70 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<title>HTML → GitHub Link (Telegram ID + User File)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HTML → GitHub Link (Telegram Mini App)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-    font-family:'Arial', sans-serif;
-  }
-  .box{
-    width:90%;
-    max-width:650px;
-    background:rgba(255,255,255,0.1);
-    backdrop-filter:blur(15px);
-    border-radius:20px;
-    padding:30px 25px;
-    color:#fff;
-    box-shadow:0 8px 32px rgba(0,0,0,0.25);
-  }
-  h2{
-    text-align:center;
-    margin-bottom:20px;
-    font-size:24px;
-    color:#00e0ff;
-  }
-  textarea, input{
-    width:100%;
-    padding:12px;
-    margin-top:12px;
-    border:none;
-    border-radius:10px;
-    font-size:14px;
-    background:rgba(255,255,255,0.05);
-    color:#fff;
-  }
-  textarea{
-    height:220px;
-    font-family:monospace;
-    resize:vertical;
-  }
-  button{
-    width:100%;
-    margin-top:15px;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    background:#00c6ff;
-    color:#000;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-    transition:0.3s;
-  }
-  button:hover{
-    background:#00b0e6;
-  }
-  #out{
-    margin-top:20px;
-    word-break:break-all;
-    font-size:14px;
-  }
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  font-family:'Arial', sans-serif;
+}
+.box{
+  width:90%;
+  max-width:650px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  border-radius:20px;
+  padding:30px 25px;
+  color:#fff;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);
+}
+h2{
+  text-align:center;
+  margin-bottom:20px;
+  font-size:24px;
+  color:#00e0ff;
+}
+textarea, input{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+  border:none;
+  border-radius:10px;
+  font-size:14px;
+  background:rgba(255,255,255,0.05);
+  color:#fff;
+}
+textarea{
+  height:220px;
+  font-family:monospace;
+  resize:vertical;
+}
+button{
+  width:100%;
+  margin-top:15px;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:#00c6ff;
+  color:#000;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.3s;
+}
+button:hover{
+  background:#00b0e6;
+}
+#out{
+  margin-top:20px;
+  word-break:break-all;
+  font-size:14px;
+}
 </style>
 </head>
 <body>
@@ -79,36 +79,35 @@
   <label>Fayl nomi (masalan: index.html):</label>
   <input id="filename" placeholder="index.html" />
 
-  <button onclick="upload()">Link olish</button>
+  <button id="uploadBtn">Link olish</button>
 
   <div id="out"></div>
 </div>
 
 <script>
-  // GitHub konfiguratsiyasi
-  const TOKEN = "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"; // Tokeningiz
-  const OWNER = "azizbek2222"; // GitHub username
-  const REPO = "html-test";    // GitHub repo nomi
+  // Telegram WebApp tayyor bo'lishini kutish
+  window.Telegram.WebApp.ready();
 
-  // Telegram mini app orqali foydalanuvchi ID olish
-  const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  const userId = window.Telegram.WebApp.initDataUnsafe?.user?.id;
 
-  if(!telegramUserId){
-    alert("Telegram ID topilmadi. Ilova Telegram ichida ochilishi kerak!");
+  if(!userId){
+    alert("Telegram ID topilmadi. Mini app ichida oching.");
   }
 
-  async function upload(){
-    if(!telegramUserId){ return; }
+  const TOKEN = "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";
+  const OWNER = "azizbek2222";
+  const REPO = "html-test";
 
+  document.getElementById("uploadBtn").onclick = async function(){
     const html = document.getElementById("code").value.trim();
-    const filenameInput = document.getElementById("filename").value.trim();
+    const filename = document.getElementById("filename").value.trim();
 
     if(!html){ alert("HTML kodni yozing!"); return; }
-    if(!filenameInput){ alert("Fayl nomini yozing!"); return; }
+    if(!filename){ alert("Fayl nomini yozing!"); return; }
+    if(!userId){ alert("Telegram ID topilmadi."); return; }
 
-    const filename = `${telegramUserId}/${filenameInput}`; // Papka = Telegram ID, fayl = foydalanuvchi kiritadi
-
-    const api = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${filename}`;
+    const path = `${userId}/${filename}`;
+    const api = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
 
     // Oldingi fayl bo‘lsa SHA olish
     let sha = null;
@@ -118,7 +117,7 @@
       sha = j.sha;
     }
 
-    // Faylni yaratish yoki yangilash
+    // Faylni yaratish yoki update qilish
     const res = await fetch(api,{
       method:"PUT",
       headers:{
@@ -126,7 +125,7 @@
         "Content-Type":"application/json"
       },
       body: JSON.stringify({
-        message: "Create HTML page via Telegram mini app",
+        message: "Create HTML page via Telegram Mini App",
         content: btoa(unescape(encodeURIComponent(html))),
         sha: sha
       })
@@ -135,9 +134,8 @@
     const data = await res.json();
 
     if(data.content){
-      const link = `https://${OWNER}.github.io/${REPO}/${telegramUserId}/${filenameInput}`;
+      const link = `https://${OWNER}.github.io/${REPO}/${path}`;
 
-      // Nusxalash
       const outDiv = document.getElementById("out");
       outDiv.innerHTML = `
         ✅ LINK:<br>
@@ -154,9 +152,8 @@
         alert("Link nusxalandi!");
       };
 
-    }else{
-      document.getElementById("out").innerText =
-        "❌ Xatolik: " + JSON.stringify(data);
+    } else {
+      document.getElementById("out").innerText = "❌ Xatolik: " + JSON.stringify(data);
     }
   }
 </script>
